@@ -90,6 +90,12 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
     private int mNewReasonDataDenied = -1;
 
     /**
+     * for usable when HENTAI SIM which by Data Only(CS:ignore/PS:available) MVNO for Docomo(Japan).
+     * https://github.com/ichinomoto/mvnocspatch/blob/master/frameworks/base/telephony/java/com/android/internal/telephony/gsm/GsmServiceStateTracker.java
+     */
+    private int mDataRegState = -1;
+    
+    /**
      * GSM roaming status solely based on TS 27.007 7.2 CREG. Only used by
      * handlePollStateResult to store CREG roaming result.
      */
@@ -596,6 +602,10 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                             loge("error parsing RegistrationState: " + ex);
                         }
                     }
+                    // for HENTAI SIM
+                    if ((regState == 3 || regState == 13) && (mDataRegState == 1 || mDataRegState == 5)) {
+                        regState = mDataRegState;
+                    }
 
                     mGsmRoaming = regCodeIsRoaming(regState);
                     newSS.setState (regCodeToServiceState(regState));
@@ -640,6 +650,10 @@ final class GsmServiceStateTracker extends ServiceStateTracker {
                     mDataRoaming = regCodeIsRoaming(regState);
                     mNewRilRadioTechnology = type;
                     newSS.setRadioTechnology(type);
+                    
+                    // For HENTAI SIM
+                    mDataRegState = regState;
+                    
                 break;
 
                 case EVENT_POLL_STATE_OPERATOR:
